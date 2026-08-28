@@ -10,907 +10,260 @@
 
 <body>
 
-<header class="topbar">
-  <div class="logo">
-    🌷 <span>My Perfect Day</span>
+  <div id="game">
+
+    <!-- GAME HUD -->
+    <header id="hud">
+      <div class="logo">🌷 My Perfect Day</div>
+
+      <div class="hud-stats">
+        <div>🪙 <span id="coins">0</span></div>
+        <div>💗 <span id="mood">70</span></div>
+        <div>⭐ <span id="score">0</span></div>
+      </div>
+    </header>
+
+
+    <!-- GAME WORLD -->
+    <main id="world">
+
+      <div id="map">
+
+        <!-- DECORATIONS -->
+        <div class="cloud cloud1">☁️</div>
+        <div class="cloud cloud2">☁️</div>
+        <div class="sun">☀️</div>
+
+        <div class="tree tree1">🌳</div>
+        <div class="tree tree2">🌳</div>
+        <div class="tree tree3">🌳</div>
+
+        <div class="flower flower1">🌸</div>
+        <div class="flower flower2">🌷</div>
+        <div class="flower flower3">🌼</div>
+        <div class="flower flower4">🌸</div>
+
+        <!-- BUILDINGS / INTERACTION AREAS -->
+
+        <button class="location bedroom"
+                data-name="Bedroom"
+                data-action="bedroom">
+          🛏️
+          <span>Bedroom</span>
+        </button>
+
+        <button class="location cafe"
+                data-name="Café"
+                data-action="cafe">
+          ☕
+          <span>Café</span>
+        </button>
+
+        <button class="location kitchen"
+                data-name="Kitchen"
+                data-action="kitchen">
+          🍳
+          <span>Kitchen</span>
+        </button>
+
+        <button class="location studio"
+                data-name="Art Studio"
+                data-action="studio">
+          🎨
+          <span>Art Studio</span>
+        </button>
+
+        <button class="location garden"
+                data-name="Garden"
+                data-action="garden">
+          🌷
+          <span>Garden</span>
+        </button>
+
+        <button class="location shop"
+                data-name="Shop"
+                data-action="shop">
+          🛍️
+          <span>Shop</span>
+        </button>
+
+        <button class="location study"
+                data-name="Study Room"
+                data-action="study">
+          📚
+          <span>Study</span>
+        </button>
+
+        <!-- PET -->
+        <button id="pet"
+                class="world-object"
+                data-name="your pet"
+                data-action="pet">
+          🐰
+        </button>
+
+        <!-- COINS -->
+        <button class="coin coin1" data-coin="1">🪙</button>
+        <button class="coin coin2" data-coin="1">🪙</button>
+        <button class="coin coin3" data-coin="1">🪙</button>
+        <button class="coin coin4" data-coin="1">🪙</button>
+        <button class="coin coin5" data-coin="1">🪙</button>
+
+        <!-- PLAYER -->
+        <div id="player">
+          <div class="player-hair"></div>
+          <div class="player-face">
+            <span class="eye left"></span>
+            <span class="eye right"></span>
+          </div>
+          <div class="player-body"></div>
+          <div class="player-skirt"></div>
+          <div class="player-bow">🎀</div>
+          <div class="player-shadow"></div>
+        </div>
+
+      </div>
+
+
+      <!-- INTERACTION MESSAGE -->
+      <div id="interaction">
+        <span id="interactionText">
+          Use WASD or the arrow keys to move ✨
+        </span>
+      </div>
+
+    </main>
+
+
+    <!-- DIALOGUE -->
+    <section id="dialogue" class="hidden">
+
+      <div class="dialogue-character">🌷</div>
+
+      <div class="dialogue-content">
+
+        <strong id="dialogueName">
+          My Perfect Day
+        </strong>
+
+        <p id="dialogueText">
+          Welcome!
+        </p>
+
+        <button id="dialogueNext">
+          Continue ✨
+        </button>
+
+      </div>
+
+    </section>
+
+
+    <!-- ACTIVITY MODAL -->
+    <div id="modal" class="hidden">
+
+      <div id="modalBox">
+
+        <button id="closeModal">×</button>
+
+        <div id="modalIcon">✨</div>
+
+        <h1 id="modalTitle">
+          Activity
+        </h1>
+
+        <p id="modalDescription">
+          Complete this activity!
+        </p>
+
+        <div id="activityContent"></div>
+
+        <button id="activityButton" class="primary">
+          Start ✨
+        </button>
+
+      </div>
+
+    </div>
+
+
+    <!-- MINI GAME -->
+    <div id="miniGame" class="hidden">
+
+      <div id="miniGameBox">
+
+        <h1 id="miniGameTitle">
+          🍓 Strawberry Catch
+        </h1>
+
+        <p id="miniGameInstructions">
+          Catch the strawberries!
+        </p>
+
+        <div id="miniGameArea"></div>
+
+        <div class="mini-score">
+          Score: <span id="miniScore">0</span>
+        </div>
+
+        <button id="closeMiniGame">
+          Leave Game
+        </button>
+
+      </div>
+
+    </div>
+
+
+    <!-- DAY PROGRESS -->
+    <div id="dayProgress">
+
+      <div class="day-title">
+        🌅 Your Perfect Day
+      </div>
+
+      <div class="progress-track">
+        <div id="progressFill"></div>
+      </div>
+
+      <span id="progressText">
+        Morning
+      </span>
+
+    </div>
+
+
+    <!-- START SCREEN -->
+    <div id="startScreen">
+
+      <div class="start-card">
+
+        <div class="start-sparkles">
+          ✨ 🌸 ✨
+        </div>
+
+        <h1>My Perfect Day</h1>
+
+        <p>
+          A tiny world made just for you.
+        </p>
+
+        <p class="instructions">
+          Explore • Collect • Create • Play
+        </p>
+
+        <button id="startGame" class="start-button">
+          Start My Day 🌷
+        </button>
+
+      </div>
+
+    </div>
+
   </div>
 
-  <div class="stats">
-    <div>🪙 <span id="coins">120</span></div>
-    <div>💗 <span id="mood">70</span></div>
-    <div>⭐ <span id="score">0</span></div>
-    <button id="themeButton">🌙</button>
-  </div>
-</header>
 
-<div class="game-layout">
-
-<nav class="sidebar">
-
-<button class="nav active" data-page="home">🏠 Home</button>
-<button class="nav" data-page="morning">🌅 Morning</button>
-<button class="nav" data-page="dress">👗 Dress Up</button>
-<button class="nav" data-page="beauty">💄 Beauty</button>
-<button class="nav" data-page="cafe">☕ Café</button>
-<button class="nav" data-page="cooking">🍳 Cooking</button>
-<button class="nav" data-page="art">🎨 Art Studio</button>
-<button class="nav" data-page="study">📚 Study</button>
-<button class="nav" data-page="music">🎵 Music</button>
-<button class="nav" data-page="garden">🌳 Garden</button>
-<button class="nav" data-page="pets">🐾 Pets</button>
-<button class="nav" data-page="shopping">🛍️ Shopping</button>
-<button class="nav" data-page="travel">🏖️ Travel</button>
-<button class="nav" data-page="memories">📸 Memories</button>
-<button class="nav" data-page="journal">💌 Journal</button>
-<button class="nav" data-page="games">🎮 Mini Games</button>
-<button class="nav" data-page="achievements">🏆 Achievements</button>
-<button class="nav" data-page="settings">⚙️ Settings</button>
-
-</nav>
-
-<main>
-
-<!-- HOME -->
-
-<section class="page active" id="home">
-
-<div class="hero">
-
-<div class="hero-text">
-
-<p class="eyebrow">✨ WELCOME TO YOUR LITTLE WORLD</p>
-
-<h1>My Perfect Day</h1>
-
-<p>
-A tiny pastel world where you can dress up,
-bake sweet treats, take care of pets,
-play games and collect beautiful memories.
-</p>
-
-<div class="buttons">
-
-<button class="primary" data-go="morning">
-Start My Day 🌸
-</button>
-
-<button class="secondary" data-go="dress">
-Customize Me 🎀
-</button>
-
-</div>
-
-</div>
-
-<div class="pixel-girl home-girl">
-
-<div class="hair"></div>
-
-<div class="face">
-<div class="eye left-eye"></div>
-<div class="eye right-eye"></div>
-<div class="blush left-blush"></div>
-<div class="blush right-blush"></div>
-</div>
-
-<div class="body"></div>
-<div class="dress-body"></div>
-
-<div class="hair-bow">🎀</div>
-
-</div>
-
-</div>
-
-
-<div class="dashboard-grid">
-
-<div class="stat-card">
-<span>💗</span>
-<b>Mood</b>
-<strong id="homeMood">70 / 100</strong>
-<div class="progress"><i id="moodBar"></i></div>
-</div>
-
-<div class="stat-card">
-<span>⭐</span>
-<b>Perfect Day</b>
-<strong id="homeScore">0 points</strong>
-<div class="progress"><i id="scoreBar"></i></div>
-</div>
-
-<div class="stat-card">
-<span>🎯</span>
-<b>Tasks</b>
-<strong id="taskCount">0 / 6</strong>
-<div class="progress"><i id="taskBar"></i></div>
-</div>
-
-</div>
-
-
-<div class="card">
-
-<div class="section-heading">
-<h2>🌷 Today's Little Plans</h2>
-<span id="today"></span>
-</div>
-
-<div id="tasks"></div>
-
-</div>
-
-</section>
-
-
-<!-- MORNING -->
-
-<section class="page" id="morning">
-
-<div class="page-heading">
-
-<p class="eyebrow">🌅 A SOFT START</p>
-
-<h1>Good Morning!</h1>
-
-<p>
-Start your perfect day with some tiny happy moments.
-</p>
-
-</div>
-
-<div class="activity-grid">
-
-<button class="activity" data-name="Make the bed" data-mood="8" data-score="10">
-🛏️
-<strong>Make the Bed</strong>
-<small>+8 mood · +10 ⭐</small>
-</button>
-
-<button class="activity" data-name="Drink water" data-mood="6" data-score="8">
-💧
-<strong>Drink Water</strong>
-<small>+6 mood · +8 ⭐</small>
-</button>
-
-<button class="activity" data-name="Open curtains" data-mood="7" data-score="9">
-☀️
-<strong>Open Curtains</strong>
-<small>+7 mood · +9 ⭐</small>
-</button>
-
-<button class="activity" data-name="Breakfast" data-mood="10" data-score="12">
-🥞
-<strong>Eat Breakfast</strong>
-<small>+10 mood · +12 ⭐</small>
-</button>
-
-<button class="activity" data-name="Stretch" data-mood="7" data-score="10">
-🌷
-<strong>Gentle Stretch</strong>
-<small>+7 mood · +10 ⭐</small>
-</button>
-
-<button class="activity" data-name="Plan day" data-mood="5" data-score="8">
-📋
-<strong>Plan My Day</strong>
-<small>+5 mood · +8 ⭐</small>
-</button>
-
-</div>
-
-</section>
-
-
-<!-- DRESS UP -->
-
-<section class="page" id="dress">
-
-<div class="page-heading">
-
-<p class="eyebrow">👗 CREATE YOUR LOOK</p>
-
-<h1>Dress Up Studio</h1>
-
-<p>
-Create your perfect pastel character.
-</p>
-
-</div>
-
-
-<div class="dress-layout">
-
-<div class="character-card card">
-
-<div id="character" class="pixel-girl">
-
-<div class="hair"></div>
-
-<div class="face">
-
-<div class="eye left-eye"></div>
-<div class="eye right-eye"></div>
-
-<div class="blush left-blush"></div>
-<div class="blush right-blush"></div>
-
-</div>
-
-<div class="body"></div>
-<div class="dress-body"></div>
-
-<div class="hair-bow">🎀</div>
-
-<div id="accessory"></div>
-
-</div>
-
-<button id="saveLook" class="primary">
-Save My Look ✨
-</button>
-
-</div>
-
-
-<div class="card customization">
-
-<h2>🎀 Customize Me</h2>
-
-<label>
-Hair Color
-
-<select id="hairColor">
-
-<option value="brown">Chocolate Brown</option>
-<option value="chestnut">Chestnut</option>
-<option value="lavender">Lavender</option>
-<option value="pink">Rose Pink</option>
-
-</select>
-
-</label>
-
-
-<label>
-Hair Style
-
-<select id="hairStyle">
-
-<option value="long">Long Hair</option>
-<option value="bob">Cute Bob</option>
-<option value="pigtails">Pigtails</option>
-
-</select>
-
-</label>
-
-
-<label>
-Outfit
-
-<select id="outfit">
-
-<option value="pink">Pink Dress</option>
-<option value="purple">Lilac Dress</option>
-<option value="cream">Cream Outfit</option>
-<option value="berry">Berry Outfit</option>
-
-</select>
-
-</label>
-
-
-<label>
-Accessory
-
-<select id="accessorySelect">
-
-<option value="bow">Big Bow 🎀</option>
-<option value="crown">Tiny Crown 👑</option>
-<option value="flower">Flower 🌸</option>
-<option value="none">None</option>
-
-</select>
-
-</label>
-
-
-<label>
-Skin Tone
-
-<select id="skinTone">
-
-<option value="light">Light</option>
-<option value="warm">Warm</option>
-<option value="peach">Peach</option>
-
-</select>
-
-</label>
-
-</div>
-
-</div>
-
-</section>
-
-
-<!-- BEAUTY -->
-
-<section class="page" id="beauty">
-
-<div class="page-heading">
-
-<p class="eyebrow">💄 COZY SELF CARE</p>
-
-<h1>Beauty Corner</h1>
-
-</div>
-
-<div class="activity-grid">
-
-<button class="activity" data-name="Skincare" data-mood="10" data-score="12">
-🫧
-<strong>Skincare</strong>
-<small>+10 mood</small>
-</button>
-
-<button class="activity" data-name="Hair care" data-mood="8" data-score="10">
-🎀
-<strong>Hair Care</strong>
-<small>+8 mood</small>
-</button>
-
-<button class="activity" data-name="Cozy shower" data-mood="12" data-score="15">
-🛁
-<strong>Cozy Shower</strong>
-<small>+12 mood</small>
-</button>
-
-<button class="activity" data-name="Perfume" data-mood="5" data-score="7">
-🌸
-<strong>Pick a Perfume</strong>
-<small>+5 mood</small>
-</button>
-
-</div>
-
-</section>
-
-
-<!-- CAFE -->
-
-<section class="page" id="cafe">
-
-<div class="page-heading">
-
-<p class="eyebrow">☕ YOUR TINY CAFÉ</p>
-
-<h1>Pastel Café</h1>
-
-<p>
-Make yourself a little treat.
-</p>
-
-</div>
-
-<div class="activity-grid">
-
-<button class="cafe-item" data-cost="8" data-reward="18" data-name="Strawberry Latte">
-🍓☕
-<strong>Strawberry Latte</strong>
-<small>8 🪙 → earn 18 🪙</small>
-</button>
-
-<button class="cafe-item" data-cost="10" data-reward="22" data-name="Blueberry Cake">
-🫐🍰
-<strong>Blueberry Cake</strong>
-<small>10 🪙 → earn 22 🪙</small>
-</button>
-
-<button class="cafe-item" data-cost="5" data-reward="16" data-name="Lavender Tea">
-💜🫖
-<strong>Lavender Tea</strong>
-<small>5 🪙 → earn 16 🪙</small>
-</button>
-
-<button class="cafe-item" data-cost="4" data-reward="14" data-name="Pink Lemonade">
-🍋🌸
-<strong>Pink Lemonade</strong>
-<small>4 🪙 → earn 14 🪙</small>
-</button>
-
-<button class="cafe-item" data-cost="7" data-reward="20" data-name="Vanilla Cupcake">
-🧁
-<strong>Vanilla Cupcake</strong>
-<small>7 🪙 → earn 20 🪙</small>
-</button>
-
-<button class="cafe-item" data-cost="9" data-reward="24" data-name="Moon Cookie">
-🌙🍪
-<strong>Moon Cookie</strong>
-<small>9 🪙 → earn 24 🪙</small>
-</button>
-
-</div>
-
-</section>
-
-
-<!-- COOKING -->
-
-<section class="page" id="cooking">
-
-<div class="page-heading">
-
-<p class="eyebrow">🍳 LITTLE KITCHEN</p>
-
-<h1>Cooking Time</h1>
-
-</div>
-
-<div class="recipe-grid">
-
-<button class="recipe" data-recipe="cupcake">
-🧁
-<strong>Vanilla Cupcakes</strong>
-<small>3 steps</small>
-</button>
-
-<button class="recipe" data-recipe="tart">
-🍓
-<strong>Strawberry Tart</strong>
-<small>3 steps</small>
-</button>
-
-<button class="recipe" data-recipe="pancakes">
-🥞
-<strong>Cloud Pancakes</strong>
-<small>3 steps</small>
-</button>
-
-</div>
-
-<div id="recipeSteps"></div>
-
-</section>
-
-
-<!-- ART -->
-
-<section class="page" id="art">
-
-<div class="page-heading">
-
-<p class="eyebrow">🎨 MAKE SOMETHING</p>
-
-<h1>Art Studio</h1>
-
-</div>
-
-<div class="art-layout">
-
-<div class="card">
-
-<canvas id="canvas" width="650" height="400"></canvas>
-
-<div id="colors"></div>
-
-<button class="secondary" id="clearCanvas">
-Clear
-</button>
-
-<button class="primary" id="saveArt">
-Save Artwork +25 🪙
-</button>
-
-</div>
-
-
-<div class="card art-prompt">
-
-<span>💡</span>
-
-<h2>Today's Prompt</h2>
-
-<p id="artPrompt"></p>
-
-<button class="secondary" id="newPrompt">
-New Prompt
-</button>
-
-</div>
-
-</div>
-
-</section>
-
-
-<!-- STUDY -->
-
-<section class="page" id="study">
-
-<div class="page-heading">
-
-<p class="eyebrow">📚 TINY PRODUCTIVE MOMENT</p>
-
-<h1>Study Nook</h1>
-
-</div>
-
-<div class="card study-box">
-
-<div id="timer">05:00</div>
-
-<button class="primary" id="startTimer">
-Start Focus
-</button>
-
-<button class="secondary" id="resetTimer">
-Reset
-</button>
-
-<p>
-Finish your 5-minute focus session for
-🪙15 + ⭐25.
-</p>
-
-</div>
-
-</section>
-
-
-<!-- MUSIC -->
-
-<section class="page" id="music">
-
-<div class="page-heading">
-
-<p class="eyebrow">🎵 SOUNDTRACK</p>
-
-<h1>Music Room</h1>
-
-</div>
-
-<div class="activity-grid">
-
-<button class="music-button" data-track="Rainy Window 🌧️">
-🌧️
-<strong>Rainy Window</strong>
-<small>soft & dreamy</small>
-</button>
-
-<button class="music-button" data-track="Fairy Garden 🧚">
-🧚
-<strong>Fairy Garden</strong>
-<small>sparkly & magical</small>
-</button>
-
-<button class="music-button" data-track="Café Afternoon ☕">
-☕
-<strong>Café Afternoon</strong>
-<small>warm & cozy</small>
-</button>
-
-</div>
-
-<div class="card now-playing">
-🎶
-<strong id="currentTrack">Nothing playing</strong>
-<button id="stopMusic" class="secondary">Stop</button>
-</div>
-
-</section>
-
-
-<!-- GARDEN -->
-
-<section class="page" id="garden">
-
-<div class="page-heading">
-
-<p class="eyebrow">🌳 GROW A LITTLE</p>
-
-<h1>Pastel Garden</h1>
-
-</div>
-
-<div id="gardenGrid" class="garden-grid"></div>
-
-<button id="waterGarden" class="primary">
-💧 Water Garden +20 ⭐
-</button>
-
-</section>
-
-
-<!-- PETS -->
-
-<section class="page" id="pets">
-
-<div class="page-heading">
-
-<p class="eyebrow">🐾 TINY FRIENDS</p>
-
-<h1>Pet Corner</h1>
-
-</div>
-
-<div class="activity-grid">
-
-<button class="pet" data-pet="Cloud Bunny">
-🐰
-<strong>Cloud Bunny</strong>
-<small>Feed · +8 mood</small>
-</button>
-
-<button class="pet" data-pet="Lavender Cat">
-🐱
-<strong>Lavender Cat</strong>
-<small>Play · +10 mood</small>
-</button>
-
-<button class="pet" data-pet="Strawberry Puppy">
-🐶
-<strong>Strawberry Puppy</strong>
-<small>Cuddle · +12 mood</small>
-</button>
-
-</div>
-
-</section>
-
-
-<!-- SHOP -->
-
-<section class="page" id="shopping">
-
-<div class="page-heading">
-
-<p class="eyebrow">🛍️ LITTLE TREATS</p>
-
-<h1>Pastel Shop</h1>
-
-</div>
-
-<div id="shopGrid" class="activity-grid"></div>
-
-</section>
-
-
-<!-- TRAVEL -->
-
-<section class="page" id="travel">
-
-<div class="page-heading">
-
-<p class="eyebrow">🏖️ DREAM DESTINATIONS</p>
-
-<h1>Travel Map</h1>
-
-</div>
-
-<div class="activity-grid">
-
-<button class="travel" data-cost="25" data-place="Cherry Blossom Park">
-🌸
-<strong>Cherry Blossom Park</strong>
-<small>25 🪙 · +20 mood</small>
-</button>
-
-<button class="travel" data-cost="40" data-place="Moonlit Beach">
-🌙
-<strong>Moonlit Beach</strong>
-<small>40 🪙 · +30 mood</small>
-</button>
-
-<button class="travel" data-cost="35" data-place="Lavender Fields">
-💜
-<strong>Lavender Fields</strong>
-<small>35 🪙 · +25 mood</small>
-</button>
-
-</div>
-
-</section>
-
-
-<!-- MEMORIES -->
-
-<section class="page" id="memories">
-
-<div class="page-heading">
-
-<p class="eyebrow">📸 KEEP THE GOOD BITS</p>
-
-<h1>Memory Album</h1>
-
-</div>
-
-<div id="album" class="album"></div>
-
-</section>
-
-
-<!-- JOURNAL -->
-
-<section class="page" id="journal">
-
-<div class="page-heading">
-
-<p class="eyebrow">💌 YOUR LITTLE DIARY</p>
-
-<h1>Journal</h1>
-
-</div>
-
-<div class="card journal">
-
-<input id="journalTitle" placeholder="Entry title...">
-
-<textarea id="journalText" placeholder="Dear diary..."></textarea>
-
-<button id="saveJournal" class="primary">
-Save Entry 💌
-</button>
-
-<div id="journalEntries"></div>
-
-</div>
-
-</section>
-
-
-<!-- MINI GAMES -->
-
-<section class="page" id="games">
-
-<div class="page-heading">
-
-<p class="eyebrow">🎮 COZY ARCADE</p>
-
-<h1>Mini Games</h1>
-
-<p>Play little games and earn coins!</p>
-
-</div>
-
-
-<div class="game-tabs">
-
-<button class="game-tab active" data-game="berries">
-🍓 Strawberry Catch
-</button>
-
-<button class="game-tab" data-game="memory">
-🧁 Memory Match
-</button>
-
-<button class="game-tab" data-game="stars">
-✨ Star Catcher
-</button>
-
-</div>
-
-
-<div class="card game">
-
-<div id="berriesGame" class="game-panel active">
-
-<h2>🍓 Strawberry Catch</h2>
-
-<p>Catch 10 strawberries!</p>
-
-<button id="startBerry" class="primary">
-Start
-</button>
-
-<div id="berryBoard"></div>
-
-<strong id="berryScore">
-0 / 10
-</strong>
-
-</div>
-
-
-<div id="memoryGame" class="game-panel">
-
-<h2>🧁 Café Memory</h2>
-
-<p>Find every matching pair.</p>
-
-<button id="startMemory" class="primary">
-New Game
-</button>
-
-<div id="memoryBoard"></div>
-
-</div>
-
-
-<div id="starsGame" class="game-panel">
-
-<h2>✨ Star Catcher</h2>
-
-<p>Catch as many stars as possible!</p>
-
-<button id="startStars" class="primary">
-Start
-</button>
-
-<div id="starBoard"></div>
-
-<strong id="starScore">
-0
-</strong>
-
-</div>
-
-</div>
-
-</section>
-
-
-<!-- ACHIEVEMENTS -->
-
-<section class="page" id="achievements">
-
-<div class="page-heading">
-
-<p class="eyebrow">🏆 LITTLE WINS</p>
-
-<h1>Achievements</h1>
-
-</div>
-
-<div id="achievementGrid" class="achievement-grid"></div>
-
-</section>
-
-
-<!-- SETTINGS -->
-
-<section class="page" id="settings">
-
-<div class="page-heading">
-
-<p class="eyebrow">⚙️ MAKE IT YOURS</p>
-
-<h1>Settings</h1>
-
-</div>
-
-<div class="card settings">
-
-<button id="dailyBonus" class="primary">
-🎁 Daily Bonus +30 🪙
-</button>
-
-<button id="resetGame" class="secondary">
-Reset All Progress
-</button>
-
-<button id="exportSave" class="secondary">
-Export Save
-</button>
-
-<p>
-Your progress automatically saves on this device.
-</p>
-
-</div>
-
-</section>
-
-</main>
-
-</div>
-
-<div id="toast"></div>
-
-<script src="script.js"></script>
+  <script src="script.js"></script>
 
 </body>
 </html>
