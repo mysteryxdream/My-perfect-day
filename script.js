@@ -1,1693 +1,1524 @@
 ```javascript
 /* =========================================================
-   🌷 MY PERFECT DAY — GAME ENGINE
+   MY PERFECT DAY 🌷
+   Complete Game Controller
    ========================================================= */
 
-const defaultGame = {
-  coins: 120,
-  mood: 70,
-  score: 0,
-  tasks: {},
-  memories: [],
-  achievements: [],
-  garden: Array(15).fill(false),
-  owned: [],
-  journals: [],
-  dailyBonus: false,
-  look: {
-    hair: "brown",
-    hairstyle: "long",
-    outfit: "pink",
-    accessory: "bow",
-    skin: "light"
-  }
-};
+document.addEventListener("DOMContentLoaded", () => {
 
-let game = JSON.parse(localStorage.getItem("myPerfectDay")) || structuredClone(defaultGame);
+  /* =========================
+     ELEMENTS
+     ========================= */
 
-function saveGame() {
-  localStorage.setItem("myPerfectDay", JSON.stringify(game));
-  updateUI();
-}
+  const player = document.getElementById("player");
+  const map = document.getElementById("map");
 
-function updateUI() {
-  document.getElementById("coins").textContent = game.coins;
-  document.getElementById("mood").textContent = game.mood;
-  document.getElementById("score").textContent = game.score;
+  const coinsDisplay = document.getElementById("coins");
+  const moodDisplay = document.getElementById("mood");
+  const scoreDisplay = document.getElementById("score");
 
-  document.getElementById("homeMood").textContent = `${game.mood} / 100`;
-  document.getElementById("homeScore").textContent = `${game.score} points`;
+  const interaction = document.getElementById("interaction");
+  const interactionText = document.getElementById("interactionText");
 
-  const completed = Object.values(game.tasks).filter(Boolean).length;
-  document.getElementById("taskCount").textContent = `${Math.min(completed, 6)} / 6`;
+  const startScreen = document.getElementById("startScreen");
+  const startGame = document.getElementById("startGame");
 
-  document.getElementById("moodBar").style.width = `${game.mood}%`;
-  document.getElementById("scoreBar").style.width =
-    `${Math.min(game.score / 2, 100)}%`;
-  document.getElementById("taskBar").style.width =
-    `${Math.min((completed / 6) * 100, 100)}%`;
+  const dialogue = document.getElementById("dialogue");
+  const dialogueName = document.getElementById("dialogueName");
+  const dialogueText = document.getElementById("dialogueText");
+  const dialogueNext = document.getElementById("dialogueNext");
 
-  renderAchievements();
-  renderAlbum();
-  renderJournal();
-  renderGarden();
-  renderShop();
-}
+  const modal = document.getElementById("modal");
+  const modalTitle = document.getElementById("modalTitle");
+  const modalIcon = document.getElementById("modalIcon");
+  const modalDescription = document.getElementById("modalDescription");
+  const activityContent = document.getElementById("activityContent");
+  const activityButton = document.getElementById("activityButton");
+  const closeModal = document.getElementById("closeModal");
 
-function toast(message) {
-  const box = document.getElementById("toast");
+  const miniGame = document.getElementById("miniGame");
+  const miniGameArea = document.getElementById("miniGameArea");
+  const miniScoreDisplay = document.getElementById("miniScore");
+  const closeMiniGame = document.getElementById("closeMiniGame");
 
-  box.textContent = message;
-  box.classList.add("show");
-
-  clearTimeout(window.toastTimer);
-
-  window.toastTimer = setTimeout(() => {
-    box.classList.remove("show");
-  }, 2200);
-}
-
-function addReward(coins = 0, mood = 0, score = 0) {
-  game.coins += coins;
-  game.mood = Math.max(0, Math.min(100, game.mood + mood));
-  game.score += score;
-
-  saveGame();
-}
+  const progressFill = document.getElementById("progressFill");
+  const progressText = document.getElementById("progressText");
 
 
-/* =========================================================
-   🌸 NAVIGATION
-   ========================================================= */
+  /* =========================
+     GAME STATE
+     ========================= */
 
-const navButtons = document.querySelectorAll(".nav");
-const pages = document.querySelectorAll(".page");
+  let gameStarted = false;
 
-function openPage(pageName) {
-  pages.forEach(page => page.classList.remove("active"));
-  navButtons.forEach(button => button.classList.remove("active"));
+  let coins = Number(localStorage.getItem("perfectDayCoins")) || 0;
+  let mood = Number(localStorage.getItem("perfectDayMood")) || 70;
+  let score = Number(localStorage.getItem("perfectDayScore")) || 0;
 
-  const page = document.getElementById(pageName);
-  const nav = document.querySelector(`.nav[data-page="${pageName}"]`);
+  let completed = JSON.parse(
+    localStorage.getItem("perfectDayCompleted") || "[]"
+  );
 
-  if (page) page.classList.add("active");
-  if (nav) nav.classList.add("active");
+  let keys = {};
 
-  window.scrollTo({
-    top: 0,
-    behavior: "smooth"
-  });
-}
+  let playerX = 650;
+  let playerY = 390;
 
-navButtons.forEach(button => {
-  button.addEventListener("click", () => {
-    openPage(button.dataset.page);
-  });
-});
+  const speed = 4;
 
-document.querySelectorAll("[data-go]").forEach(button => {
-  button.addEventListener("click", () => {
-    openPage(button.dataset.go);
-  });
-});
+  let currentAction = null;
+
+  let dialogueLines = [];
+  let dialogueIndex = 0;
+
+  let miniScore = 0;
+  let miniTimer = null;
+
+  const MAP_WIDTH = 1400;
+  const MAP_HEIGHT = 850;
+
+  const PLAYER_WIDTH = 70;
+  const PLAYER_HEIGHT = 105;
 
 
-/* =========================================================
-   🌅 MORNING / ACTIVITIES
-   ========================================================= */
+  /* =========================
+     INITIAL UI
+     ========================= */
 
-document.querySelectorAll(".activity").forEach(button => {
+  updateStats();
+  updateProgress();
 
-  button.addEventListener("click", () => {
 
-    const name = button.dataset.name;
+  /* =========================
+     START GAME
+     ========================= */
 
-    if (game.tasks[name]) {
-      toast("You already completed this ✨");
-      return;
-    }
+  startGame.addEventListener("click", () => {
 
-    game.tasks[name] = true;
+    gameStarted = true;
 
-    const mood = Number(button.dataset.mood || 0);
-    const score = Number(button.dataset.score || 0);
+    startScreen.classList.add("hidden");
 
-    addReward(5, mood, score);
-
-    addMemory(
-      "🌷",
-      name,
-      "A tiny moment from your perfect day."
+    showDialogue(
+      "My Perfect Day",
+      [
+        "Good morning! 🌷",
+        "Today is your perfect day.",
+        "Explore the little world and discover activities.",
+        "Use WASD or the arrow keys to move around.",
+        "Walk near something and press E to interact! ✨"
+      ]
     );
 
-    button.classList.add("completed");
-
-    toast(`✨ ${name} completed! +5 🪙`);
-
-    checkAchievements();
   });
 
-});
 
+  /* =========================
+     KEYBOARD
+     ========================= */
 
-/* =========================================================
-   👗 CHARACTER CUSTOMIZATION
-   ========================================================= */
+  document.addEventListener("keydown", (event) => {
 
-const character = document.getElementById("character");
+    const key = event.key.toLowerCase();
 
-function updateCharacter() {
+    keys[key] = true;
 
-  if (!character) return;
+    if (
+      ["arrowup", "arrowdown", "arrowleft", "arrowright", " "].includes(key)
+    ) {
+      event.preventDefault();
+    }
 
-  character.classList.remove(
-    "hair-brown",
-    "hair-chestnut",
-    "hair-lavender",
-    "hair-pink",
-    "style-long",
-    "style-bob",
-    "style-pigtails",
-    "outfit-pink",
-    "outfit-purple",
-    "outfit-cream",
-    "outfit-berry",
-    "skin-light",
-    "skin-warm",
-    "skin-peach"
-  );
+    if (key === "e" && gameStarted) {
+      interact();
+    }
 
-  character.classList.add(`hair-${game.look.hair}`);
-  character.classList.add(`style-${game.look.hairstyle}`);
-  character.classList.add(`outfit-${game.look.outfit}`);
-  character.classList.add(`skin-${game.look.skin}`);
+    if (key === "escape") {
+      closeAll();
+    }
 
-  const accessory = document.getElementById("accessory");
-
-  const icons = {
-    bow: "🎀",
-    crown: "👑",
-    flower: "🌸",
-    none: ""
-  };
-
-  accessory.textContent = icons[game.look.accessory] || "";
-}
-
-const hairColor = document.getElementById("hairColor");
-const hairStyle = document.getElementById("hairStyle");
-const outfit = document.getElementById("outfit");
-const accessorySelect = document.getElementById("accessorySelect");
-const skinTone = document.getElementById("skinTone");
-
-if (hairColor) {
-  hairColor.addEventListener("change", e => {
-    game.look.hair = e.target.value;
-    updateCharacter();
-    saveGame();
   });
-}
 
-if (hairStyle) {
-  hairStyle.addEventListener("change", e => {
-    game.look.hairstyle = e.target.value;
-    updateCharacter();
-    saveGame();
+
+  document.addEventListener("keyup", (event) => {
+    keys[event.key.toLowerCase()] = false;
   });
-}
-
-if (outfit) {
-  outfit.addEventListener("change", e => {
-    game.look.outfit = e.target.value;
-    updateCharacter();
-    saveGame();
-  });
-}
-
-if (accessorySelect) {
-  accessorySelect.addEventListener("change", e => {
-    game.look.accessory = e.target.value;
-    updateCharacter();
-    saveGame();
-  });
-}
-
-if (skinTone) {
-  skinTone.addEventListener("change", e => {
-    game.look.skin = e.target.value;
-    updateCharacter();
-    saveGame();
-  });
-}
-
-document.getElementById("saveLook")?.addEventListener("click", () => {
-
-  addReward(15, 5, 20);
-
-  addMemory(
-    "👗",
-    "New Look",
-    "You created a new outfit in the dress-up studio!"
-  );
-
-  toast("🎀 Look saved! +15 🪙");
-
-  confetti();
-  checkAchievements();
-});
 
 
-/* =========================================================
-   ☕ CAFÉ
-   ========================================================= */
+  /* =========================
+     GAME LOOP
+     ========================= */
 
-document.querySelectorAll(".cafe-item").forEach(item => {
+  function gameLoop() {
 
-  item.addEventListener("click", () => {
+    if (gameStarted && !isBlocked()) {
+      movePlayer();
+    }
 
-    const cost = Number(item.dataset.cost);
-    const reward = Number(item.dataset.reward);
-    const name = item.dataset.name;
+    requestAnimationFrame(gameLoop);
+  }
 
-    if (game.coins < cost) {
-      toast("Not enough coins 🪙");
+  gameLoop();
+
+
+  /* =========================
+     MOVEMENT
+     ========================= */
+
+  function movePlayer() {
+
+    let moving = false;
+
+    if (keys["arrowup"] || keys["w"]) {
+      playerY -= speed;
+      moving = true;
+    }
+
+    if (keys["arrowdown"] || keys["s"]) {
+      playerY += speed;
+      moving = true;
+    }
+
+    if (keys["arrowleft"] || keys["a"]) {
+      playerX -= speed;
+      moving = true;
+    }
+
+    if (keys["arrowright"] || keys["d"]) {
+      playerX += speed;
+      moving = true;
+    }
+
+    /* Keep player inside world */
+
+    playerX = Math.max(
+      20,
+      Math.min(MAP_WIDTH - PLAYER_WIDTH, playerX)
+    );
+
+    playerY = Math.max(
+      100,
+      Math.min(MAP_HEIGHT - PLAYER_HEIGHT, playerY)
+    );
+
+    player.style.left = playerX + "px";
+    player.style.top = playerY + "px";
+
+    if (moving) {
+      player.classList.add("walking");
+    } else {
+      player.classList.remove("walking");
+    }
+
+    updateCamera();
+    checkNearby();
+  }
+
+
+  /* =========================
+     CAMERA
+     ========================= */
+
+  function updateCamera() {
+
+    const worldWidth = window.innerWidth;
+    const worldHeight = window.innerHeight - 72;
+
+    let cameraX = -(playerX - worldWidth / 2);
+    let cameraY = -(playerY - worldHeight / 2);
+
+    const minX = -(MAP_WIDTH - worldWidth);
+    const minY = -(MAP_HEIGHT - worldHeight);
+
+    cameraX = Math.min(0, Math.max(minX, cameraX));
+    cameraY = Math.min(0, Math.max(minY, cameraY));
+
+    map.style.transform =
+      `translate(${cameraX}px, ${cameraY}px)`;
+  }
+
+
+  /* =========================
+     INTERACTION CHECK
+     ========================= */
+
+  function checkNearby() {
+
+    if (!gameStarted) return;
+
+    const objects = [
+      ...document.querySelectorAll(".location"),
+      document.getElementById("pet"),
+      ...document.querySelectorAll(".coin")
+    ];
+
+    let nearest = null;
+    let nearestDistance = Infinity;
+
+    objects.forEach(object => {
+
+      if (object.classList.contains("collected")) return;
+
+      const x = parseFloat(object.style.left || object.offsetLeft);
+      const y = parseFloat(object.style.top || object.offsetTop);
+
+      const centerX = x + object.offsetWidth / 2;
+      const centerY = y + object.offsetHeight / 2;
+
+      const playerCenterX =
+        playerX + PLAYER_WIDTH / 2;
+
+      const playerCenterY =
+        playerY + PLAYER_HEIGHT / 2;
+
+      const distance = Math.sqrt(
+        Math.pow(centerX - playerCenterX, 2) +
+        Math.pow(centerY - playerCenterY, 2)
+      );
+
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearest = object;
+      }
+
+    });
+
+
+    if (nearest && nearestDistance < 125) {
+
+      interaction.classList.add("near");
+
+      if (nearest.classList.contains("coin")) {
+
+        interactionText.textContent =
+          "🪙 Press E to collect the coin!";
+
+        currentAction = {
+          type: "coin",
+          object: nearest
+        };
+
+      } else {
+
+        const name =
+          nearest.dataset.name || "this";
+
+        interactionText.textContent =
+          `✨ Press E to interact with ${name}!`;
+
+        currentAction = {
+          type: "action",
+          action: nearest.dataset.action
+        };
+
+      }
+
+    } else {
+
+      interaction.classList.remove("near");
+
+      interactionText.textContent =
+        "Use WASD or arrow keys to explore ✨";
+
+      currentAction = null;
+    }
+
+  }
+
+
+  /* =========================
+     INTERACT
+     ========================= */
+
+  function interact() {
+
+    if (!currentAction) return;
+
+    if (currentAction.type === "coin") {
+
+      collectCoin(currentAction.object);
+
       return;
     }
 
-    game.coins -= cost;
+    runAction(currentAction.action);
+  }
 
-    game.coins += reward;
 
-    game.mood = Math.min(100, game.mood + 8);
-    game.score += 15;
+  /* =========================
+     COLLECT COIN
+     ========================= */
 
-    addMemory(
+  function collectCoin(coin) {
+
+    coin.classList.add("collected");
+
+    coin.style.pointerEvents = "none";
+
+    coin.animate(
+      [
+        {
+          transform: "scale(1)",
+          opacity: 1
+        },
+        {
+          transform: "scale(1.8) translateY(-25px)",
+          opacity: 0
+        }
+      ],
+      {
+        duration: 450,
+        easing: "ease-out"
+      }
+    );
+
+    setTimeout(() => {
+      coin.style.display = "none";
+    }, 430);
+
+    coins += 10;
+    score += 5;
+    mood = Math.min(100, mood + 2);
+
+    saveGame();
+    updateStats();
+
+    showFloatingText("+10 🪙");
+  }
+
+
+  /* =========================
+     ACTIONS
+     ========================= */
+
+  function runAction(action) {
+
+    switch (action) {
+
+      case "bedroom":
+        openBedroom();
+        break;
+
+      case "cafe":
+        openCafe();
+        break;
+
+      case "kitchen":
+        openKitchen();
+        break;
+
+      case "studio":
+        openStudio();
+        break;
+
+      case "garden":
+        openGarden();
+        break;
+
+      case "shop":
+        openShop();
+        break;
+
+      case "study":
+        openStudy();
+        break;
+
+      case "pet":
+        petInteraction();
+        break;
+
+      default:
+        break;
+    }
+
+  }
+
+
+  /* =========================
+     BEDROOM
+     ========================= */
+
+  function openBedroom() {
+
+    openModal(
+      "🛏️",
+      "Good Morning!",
+      "Start your day by getting ready.",
+      "Get Ready ✨",
+      () => {
+
+        completeActivity(
+          "morning",
+          15,
+          5
+        );
+
+        showDialogue(
+          "Morning",
+          [
+            "You got ready for the day! 🎀",
+            "Your perfect day has officially started."
+          ]
+        );
+
+      }
+    );
+
+  }
+
+
+  /* =========================
+     CAFE
+     ========================= */
+
+  function openCafe() {
+
+    openModal(
       "☕",
-      name,
-      `You made ${name} at your cozy café.`
-    );
+      "Cozy Café",
+      "Make yourself a cute café drink!",
+      "Make Drink ☕",
+      () => {
+
+        completeActivity(
+          "cafe",
+          20,
+          7
+        );
+
+        showDialogue(
+          "Café",
+          [
+            "Your drink is ready! ☕💕",
+            "That was the perfect little café break."
+          ]
+        );
 
-    saveGame();
-
-    toast(`☕ ${name}! +${reward - cost} 🪙`);
-
-    checkAchievements();
-  });
-
-});
-
-
-/* =========================================================
-   🍳 COOKING
-   ========================================================= */
-
-const recipes = {
-
-  cupcake: {
-    name: "Vanilla Cupcakes",
-    icon: "🧁",
-    steps: [
-      "🥣 Mix the ingredients",
-      "🧁 Fill the cupcake cups",
-      "🔥 Bake until fluffy"
-    ]
-  },
-
-  tart: {
-    name: "Strawberry Tart",
-    icon: "🍓",
-    steps: [
-      "🥧 Prepare the pastry",
-      "🍓 Add strawberries",
-      "✨ Add the finishing touch"
-    ]
-  },
-
-  pancakes: {
-    name: "Cloud Pancakes",
-    icon: "🥞",
-    steps: [
-      "🥣 Mix the batter",
-      "🍳 Cook the pancakes",
-      "🍓 Add toppings"
-    ]
-  }
-
-};
-
-let currentRecipe = null;
-let recipeStep = 0;
-
-document.querySelectorAll(".recipe").forEach(button => {
-
-  button.addEventListener("click", () => {
-
-    currentRecipe = recipes[button.dataset.recipe];
-    recipeStep = 0;
-
-    showRecipeStep();
-
-  });
-
-});
-
-function showRecipeStep() {
-
-  const box = document.getElementById("recipeSteps");
-
-  if (!currentRecipe) return;
-
-  if (recipeStep >= currentRecipe.steps.length) {
-
-    box.innerHTML = `
-      <div class="card">
-        <h2>${currentRecipe.icon} ${currentRecipe.name} is ready!</h2>
-        <p>Perfect! You made something delicious. ✨</p>
-      </div>
-    `;
-
-    addReward(20, 12, 25);
-
-    addMemory(
-      currentRecipe.icon,
-      currentRecipe.name,
-      "A delicious recipe you made yourself."
-    );
-
-    toast("🍳 Recipe complete! +20 🪙");
-
-    checkAchievements();
-
-    return;
-  }
-
-  box.innerHTML = `
-    <div class="card">
-      <h2>${currentRecipe.icon} ${currentRecipe.name}</h2>
-
-      <p class="recipe-progress">
-        Step ${recipeStep + 1} of ${currentRecipe.steps.length}
-      </p>
-
-      <button class="recipe-step" id="nextRecipe">
-        ${currentRecipe.steps[recipeStep]}
-      </button>
-    </div>
-  `;
-
-  document.getElementById("nextRecipe").onclick = () => {
-
-    recipeStep++;
-
-    showRecipeStep();
-
-  };
-
-}
-
-
-/* =========================================================
-   🎨 ART STUDIO
-   ========================================================= */
-
-const canvas = document.getElementById("canvas");
-const ctx = canvas?.getContext("2d");
-
-let drawing = false;
-let currentColor = "#d991b5";
-
-const artColors = [
-  "#f4b6d2",
-  "#c9b7ec",
-  "#a88bd0",
-  "#f7d9b7",
-  "#a9d9d0",
-  "#d9a9d0",
-  "#70505f",
-  "#ffffff"
-];
-
-const colorBox = document.getElementById("colors");
-
-if (colorBox) {
-
-  artColors.forEach(color => {
-
-    const button = document.createElement("button");
-
-    button.className = "color-button";
-    button.style.background = color;
-
-    button.addEventListener("click", () => {
-      currentColor = color;
-    });
-
-    colorBox.appendChild(button);
-
-  });
-
-}
-
-function draw(e) {
-
-  if (!drawing || !ctx) return;
-
-  const rect = canvas.getBoundingClientRect();
-
-  const x = (e.clientX - rect.left) * (canvas.width / rect.width);
-  const y = (e.clientY - rect.top) * (canvas.height / rect.height);
-
-  ctx.fillStyle = currentColor;
-
-  ctx.beginPath();
-  ctx.arc(x, y, 7, 0, Math.PI * 2);
-  ctx.fill();
-}
-
-if (canvas) {
-
-  canvas.addEventListener("pointerdown", e => {
-    drawing = true;
-    draw(e);
-  });
-
-  canvas.addEventListener("pointermove", draw);
-
-  canvas.addEventListener("pointerup", () => {
-    drawing = false;
-  });
-
-  canvas.addEventListener("pointerleave", () => {
-    drawing = false;
-  });
-
-}
-
-document.getElementById("clearCanvas")?.addEventListener("click", () => {
-
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  toast("Canvas cleared ✨");
-
-});
-
-
-const prompts = [
-  "Draw your dream café ☕",
-  "Draw a magical garden 🌷",
-  "Draw your perfect bedroom 🛏️",
-  "Draw a cute pet 🐰",
-  "Draw your dream vacation 🏖️",
-  "Draw a magical outfit 👗",
-  "Draw a picnic under the stars ✨",
-  "Draw a tiny fairy house 🧚"
-];
-
-function newPrompt() {
-
-  const prompt =
-    prompts[Math.floor(Math.random() * prompts.length)];
-
-  document.getElementById("artPrompt").textContent = prompt;
-}
-
-document.getElementById("newPrompt")?.addEventListener("click", newPrompt);
-
-document.getElementById("saveArt")?.addEventListener("click", () => {
-
-  addReward(25, 10, 30);
-
-  addMemory(
-    "🎨",
-    "Artwork Created",
-    "You made a little masterpiece in the art studio."
-  );
-
-  toast("🎨 Artwork saved! +25 🪙");
-
-  checkAchievements();
-
-});
-
-newPrompt();
-
-
-/* =========================================================
-   📚 STUDY TIMER
-   ========================================================= */
-
-let timerSeconds = 300;
-let timerInterval = null;
-
-function updateTimer() {
-
-  const minutes = Math.floor(timerSeconds / 60);
-  const seconds = timerSeconds % 60;
-
-  document.getElementById("timer").textContent =
-    `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
-
-}
-
-document.getElementById("startTimer")?.addEventListener("click", () => {
-
-  if (timerInterval) return;
-
-  toast("📚 Focus time started!");
-
-  timerInterval = setInterval(() => {
-
-    timerSeconds--;
-
-    updateTimer();
-
-    if (timerSeconds <= 0) {
-
-      clearInterval(timerInterval);
-      timerInterval = null;
-
-      addReward(15, 8, 25);
-
-      addMemory(
-        "📚",
-        "Focus Session",
-        "You completed a focused study session."
-      );
-
-      toast("📚 Focus complete! +15 🪙");
-
-      confetti();
-
-      timerSeconds = 300;
-      updateTimer();
-
-      checkAchievements();
-
-    }
-
-  }, 1000);
-
-});
-
-document.getElementById("resetTimer")?.addEventListener("click", () => {
-
-  clearInterval(timerInterval);
-
-  timerInterval = null;
-
-  timerSeconds = 300;
-
-  updateTimer();
-
-});
-
-
-/* =========================================================
-   🎵 MUSIC ROOM
-   ========================================================= */
-
-document.querySelectorAll(".music-button").forEach(button => {
-
-  button.addEventListener("click", () => {
-
-    const track = button.dataset.track;
-
-    document.getElementById("currentTrack").textContent =
-      `Now playing: ${track}`;
-
-    game.mood = Math.min(100, game.mood + 5);
-    game.score += 5;
-
-    saveGame();
-
-    toast(`🎵 ${track}`);
-
-  });
-
-});
-
-document.getElementById("stopMusic")?.addEventListener("click", () => {
-
-  document.getElementById("currentTrack").textContent =
-    "Nothing playing";
-
-});
-
-
-/* =========================================================
-   🌳 GARDEN
-   ========================================================= */
-
-function renderGarden() {
-
-  const grid = document.getElementById("gardenGrid");
-
-  if (!grid) return;
-
-  grid.innerHTML = "";
-
-  game.garden.forEach((grown, index) => {
-
-    const plot = document.createElement("button");
-
-    plot.className = `garden-plot ${grown ? "grown" : ""}`;
-
-    plot.textContent = grown ? "🌷" : "🌱";
-
-    plot.title = grown
-      ? "A flower is growing here!"
-      : "Click to plant";
-
-    plot.addEventListener("click", () => {
-
-      if (game.garden[index]) {
-        toast("This flower is already growing 🌷");
-        return;
       }
-
-      game.garden[index] = true;
-
-      addReward(3, 4, 8);
-
-      toast("🌱 You planted a flower!");
-
-      checkAchievements();
-
-    });
-
-    grid.appendChild(plot);
-
-  });
-
-}
-
-document.getElementById("waterGarden")?.addEventListener("click", () => {
-
-  const grown = game.garden.filter(Boolean).length;
-
-  if (grown === 0) {
-    toast("Plant some flowers first 🌱");
-    return;
-  }
-
-  addReward(5, 8, 20);
-
-  toast("💧 Your garden is sparkling!");
-
-  checkAchievements();
-
-});
-
-
-/* =========================================================
-   🐾 PETS
-   ========================================================= */
-
-document.querySelectorAll(".pet").forEach(button => {
-
-  button.addEventListener("click", () => {
-
-    const pet = button.dataset.pet;
-
-    addReward(5, 10, 12);
-
-    addMemory(
-      "🐾",
-      `Time with ${pet}`,
-      `You spent some lovely time with your ${pet}.`
     );
 
-    toast(`🐾 ${pet} is happy!`);
-
-    checkAchievements();
-
-  });
-
-});
-
-
-/* =========================================================
-   🛍️ SHOP
-   ========================================================= */
-
-const shopItems = [
-
-  {
-    id: "pink-bow",
-    icon: "🎀",
-    name: "Silky Pink Bow",
-    price: 30
-  },
-
-  {
-    id: "flower-crown",
-    icon: "🌸",
-    name: "Flower Crown",
-    price: 45
-  },
-
-  {
-    id: "purple-bag",
-    icon: "👜",
-    name: "Lavender Bag",
-    price: 60
-  },
-
-  {
-    id: "fairy-wings",
-    icon: "🧚",
-    name: "Fairy Wings",
-    price: 80
-  },
-
-  {
-    id: "cake-display",
-    icon: "🍰",
-    name: "Café Cake Display",
-    price: 55
-  },
-
-  {
-    id: "pink-lamp",
-    icon: "🏮",
-    name: "Pastel Lamp",
-    price: 35
-  },
-
-  {
-    id: "teddy",
-    icon: "🧸",
-    name: "Tiny Teddy",
-    price: 50
-  },
-
-  {
-    id: "magic-wand",
-    icon: "🪄",
-    name: "Magic Wand",
-    price: 100
   }
 
-];
 
-function renderShop() {
+  /* =========================
+     KITCHEN
+     ========================= */
 
-  const shop = document.getElementById("shopGrid");
+  function openKitchen() {
 
-  if (!shop) return;
+    openModal(
+      "🍳",
+      "Little Kitchen",
+      "Prepare breakfast by choosing the ingredients.",
+      "Cook Breakfast 🍳",
+      () => {
 
-  shop.innerHTML = "";
+        const ingredients = [
+          "🥚 Egg",
+          "🍓 Strawberry",
+          "🥞 Pancake",
+          "🥛 Milk"
+        ];
 
-  shopItems.forEach(item => {
+        activityContent.innerHTML = `
+          <div style="
+            display:grid;
+            grid-template-columns:1fr 1fr;
+            gap:12px;
+            margin-top:20px;
+          ">
+            ${ingredients.map((item, index) => `
+              <button
+                class="ingredient"
+                data-index="${index}"
+                style="
+                  padding:18px;
+                  border:3px solid #ead8ec;
+                  border-radius:18px;
+                  background:#fff;
+                  font-size:16px;
+                  font-weight:800;
+                  cursor:pointer;
+                ">
+                ${item}
+              </button>
+            `).join("")}
+          </div>
+        `;
 
-    const owned = game.owned.includes(item.id);
+        activityButton.textContent = "Finish Cooking ✨";
 
-    const card = document.createElement("div");
+        let selected = 0;
 
-    card.className = "shop-item";
+        document.querySelectorAll(".ingredient")
+          .forEach(button => {
 
-    card.innerHTML = `
-      <div class="item-icon">${item.icon}</div>
-      <h2>${item.name}</h2>
-      <p>${item.price} 🪙</p>
-      <button class="${owned ? "secondary" : "primary"}">
-        ${owned ? "Owned ✓" : "Buy"}
-      </button>
-    `;
+            button.addEventListener("click", () => {
 
-    const button = card.querySelector("button");
+              if (!button.classList.contains("selected")) {
 
-    button.addEventListener("click", () => {
+                button.classList.add("selected");
 
-      if (owned) {
-        toast("You already own this ✨");
-        return;
-      }
+                button.style.background = "#f9dceb";
 
-      if (game.coins < item.price) {
-        toast("You need more coins 🪙");
-        return;
-      }
+                selected++;
 
-      game.coins -= item.price;
-      game.owned.push(item.id);
+              }
 
-      game.score += 10;
+            });
 
-      addMemory(
-        item.icon,
-        "New Item!",
-        `You bought ${item.name}.`
-      );
+          });
 
-      saveGame();
+        activityButton.onclick = () => {
 
-      toast(`${item.icon} ${item.name} unlocked!`);
+          if (selected < 2) {
 
-      checkAchievements();
+            alert("Choose at least two ingredients! 🍓");
 
-    });
-
-    shop.appendChild(card);
-
-  });
-
-}
-
-
-/* =========================================================
-   🏖️ TRAVEL
-   ========================================================= */
-
-document.querySelectorAll(".travel").forEach(button => {
-
-  button.addEventListener("click", () => {
-
-    const cost = Number(button.dataset.cost);
-    const place = button.dataset.place;
-
-    if (game.coins < cost) {
-      toast("You need more coins for this trip 🪙");
-      return;
-    }
-
-    game.coins -= cost;
-    game.mood = Math.min(100, game.mood + 20);
-    game.score += 30;
-
-    addMemory(
-      "🏖️",
-      `Trip to ${place}`,
-      `You visited ${place} during your perfect day.`
-    );
-
-    saveGame();
-
-    toast(`🏖️ Welcome to ${place}!`);
-
-    confetti();
-
-    checkAchievements();
-
-  });
-
-});
-
-
-/* =========================================================
-   📸 MEMORIES
-   ========================================================= */
-
-function addMemory(icon, title, text) {
-
-  game.memories.unshift({
-    icon,
-    title,
-    text,
-    date: new Date().toLocaleDateString()
-  });
-
-  if (game.memories.length > 30) {
-    game.memories.pop();
-  }
-
-  saveGame();
-
-}
-
-function renderAlbum() {
-
-  const album = document.getElementById("album");
-
-  if (!album) return;
-
-  if (game.memories.length === 0) {
-
-    album.innerHTML = `
-      <div class="card">
-        <h2>📸 Your album is waiting...</h2>
-        <p>Complete activities to create your first memory!</p>
-      </div>
-    `;
-
-    return;
-  }
-
-  album.innerHTML = game.memories.map(memory => `
-
-    <div class="memory-card">
-
-      <div class="memory-icon">
-        ${memory.icon}
-      </div>
-
-      <h2>${memory.title}</h2>
-
-      <p>${memory.text}</p>
-
-      <small>${memory.date}</small>
-
-    </div>
-
-  `).join("");
-
-}
-
-
-/* =========================================================
-   💌 JOURNAL
-   ========================================================= */
-
-function renderJournal() {
-
-  const box = document.getElementById("journalEntries");
-
-  if (!box) return;
-
-  if (game.journals.length === 0) {
-
-    box.innerHTML =
-      "<p>Your journal is empty. Write your first entry! 💌</p>";
-
-    return;
-  }
-
-  box.innerHTML = game.journals.map(entry => `
-
-    <div class="journal-entry">
-
-      <h2>${escapeHTML(entry.title)}</h2>
-
-      <p>${escapeHTML(entry.text)}</p>
-
-      <small>${entry.date}</small>
-
-    </div>
-
-  `).join("");
-
-}
-
-document.getElementById("saveJournal")?.addEventListener("click", () => {
-
-  const title = document.getElementById("journalTitle").value.trim();
-  const text = document.getElementById("journalText").value.trim();
-
-  if (!title || !text) {
-
-    toast("Write something first 💌");
-
-    return;
-
-  }
-
-  game.journals.unshift({
-    title,
-    text,
-    date: new Date().toLocaleDateString()
-  });
-
-  document.getElementById("journalTitle").value = "";
-  document.getElementById("journalText").value = "";
-
-  addReward(10, 6, 15);
-
-  addMemory(
-    "💌",
-    "Journal Entry",
-    "You wrote something in your little diary."
-  );
-
-  toast("💌 Journal entry saved!");
-
-  checkAchievements();
-
-});
-
-function escapeHTML(text) {
-
-  const div = document.createElement("div");
-  div.textContent = text;
-
-  return div.innerHTML;
-
-}
-
-
-/* =========================================================
-   🍓 MINI GAME 1 — STRAWBERRY CATCH
-   ========================================================= */
-
-let berryRunning = false;
-let berryCaught = 0;
-let berryInterval = null;
-
-document.getElementById("startBerry")?.addEventListener("click", () => {
-
-  if (berryRunning) return;
-
-  berryRunning = true;
-  berryCaught = 0;
-
-  document.getElementById("berryScore").textContent = "0 / 10";
-
-  const board = document.getElementById("berryBoard");
-
-  board.innerHTML = "";
-
-  berryInterval = setInterval(() => {
-
-    if (berryCaught >= 10) {
-
-      clearInterval(berryInterval);
-      berryRunning = false;
-
-      addReward(40, 12, 50);
-
-      toast("🍓 You caught them all! +40 🪙");
-
-      confetti();
-
-      checkAchievements();
-
-      return;
-    }
-
-    spawnBerry();
-
-  }, 700);
-
-});
-
-function spawnBerry() {
-
-  const board = document.getElementById("berryBoard");
-
-  const berry = document.createElement("button");
-
-  berry.className = "falling-item";
-  berry.textContent = "🍓";
-
-  berry.style.left =
-    `${Math.random() * 88 + 4}%`;
-
-  berry.style.top =
-    `${Math.random() * 78 + 5}%`;
-
-  berry.addEventListener("click", () => {
-
-    berryCaught++;
-
-    document.getElementById("berryScore").textContent =
-      `${berryCaught} / 10`;
-
-    berry.remove();
-
-  });
-
-  board.appendChild(berry);
-
-  setTimeout(() => {
-
-    if (berry.isConnected) {
-      berry.remove();
-    }
-
-  }, 1300);
-
-}
-
-
-/* =========================================================
-   🧁 MINI GAME 2 — MEMORY MATCH
-   ========================================================= */
-
-const memoryIcons = [
-  "🧁",
-  "🍓",
-  "🌸",
-  "☕",
-  "🐰",
-  "🎀",
-  "🍰",
-  "✨"
-];
-
-let memoryCards = [];
-let flippedCards = [];
-let matchedPairs = 0;
-let memoryLocked = false;
-
-document.getElementById("startMemory")?.addEventListener("click", startMemory);
-
-function startMemory() {
-
-  const board = document.getElementById("memoryBoard");
-
-  board.innerHTML = "";
-
-  memoryCards = [...memoryIcons, ...memoryIcons]
-    .sort(() => Math.random() - .5);
-
-  flippedCards = [];
-  matchedPairs = 0;
-  memoryLocked = false;
-
-  memoryCards.forEach((icon, index) => {
-
-    const tile = document.createElement("button");
-
-    tile.className = "memory-tile";
-    tile.dataset.icon = icon;
-    tile.dataset.index = index;
-
-    tile.textContent = icon;
-
-    tile.addEventListener("click", () => {
-
-      if (
-        memoryLocked ||
-        tile.classList.contains("flipped") ||
-        tile.classList.contains("matched")
-      ) return;
-
-      tile.classList.add("flipped");
-
-      flippedCards.push(tile);
-
-      if (flippedCards.length === 2) {
-
-        memoryLocked = true;
-
-        const [first, second] = flippedCards;
-
-        if (first.dataset.icon === second.dataset.icon) {
-
-          first.classList.add("matched");
-          second.classList.add("matched");
-
-          matchedPairs++;
-
-          flippedCards = [];
-          memoryLocked = false;
-
-          if (matchedPairs === memoryIcons.length) {
-
-            addReward(50, 15, 60);
-
-            addMemory(
-              "🧁",
-              "Memory Match Champion",
-              "You matched every card!"
-            );
-
-            toast("🧁 Perfect match! +50 🪙");
-
-            confetti();
-
-            checkAchievements();
-
+            return;
           }
 
-        } else {
+          completeActivity(
+            "kitchen",
+            25,
+            8
+          );
 
-          setTimeout(() => {
+          closeModal();
 
-            first.classList.remove("flipped");
-            second.classList.remove("flipped");
+          showDialogue(
+            "Kitchen",
+            [
+              "Breakfast is ready! 🥞💕",
+              "You made something delicious."
+            ]
+          );
 
-            flippedCards = [];
-            memoryLocked = false;
+        };
 
-          }, 700);
+      }
+    );
+
+  }
+
+
+  /* =========================
+     ART STUDIO
+     ========================= */
+
+  function openStudio() {
+
+    openModal(
+      "🎨",
+      "Art Studio",
+      "Create a tiny masterpiece!",
+      "Open Art Studio 🎨",
+      () => {
+
+        activityContent.innerHTML = `
+          <canvas
+            id="drawingCanvas"
+            width="500"
+            height="260"
+            style="
+              width:100%;
+              max-width:500px;
+              background:#fff;
+              border:3px solid #ead8ec;
+              border-radius:20px;
+              cursor:crosshair;
+              touch-action:none;
+            ">
+          </canvas>
+
+          <div style="margin-top:15px;">
+            <button id="clearCanvas"
+              style="
+                border:none;
+                padding:10px 18px;
+                border-radius:14px;
+                background:#eee2f4;
+                font-weight:800;
+                cursor:pointer;
+              ">
+              Clear 🧹
+            </button>
+          </div>
+        `;
+
+        activityButton.textContent =
+          "Save Artwork ✨";
+
+        const canvas =
+          document.getElementById("drawingCanvas");
+
+        const ctx = canvas.getContext("2d");
+
+        ctx.lineWidth = 5;
+        ctx.lineCap = "round";
+        ctx.strokeStyle = "#8d7197";
+
+        let drawing = false;
+
+        function position(event) {
+
+          const rect =
+            canvas.getBoundingClientRect();
+
+          return {
+            x:
+              (event.clientX - rect.left) *
+              (canvas.width / rect.width),
+
+            y:
+              (event.clientY - rect.top) *
+              (canvas.height / rect.height)
+          };
 
         }
 
+        canvas.addEventListener(
+          "pointerdown",
+          event => {
+
+            drawing = true;
+
+            const p = position(event);
+
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+
+          }
+        );
+
+        canvas.addEventListener(
+          "pointermove",
+          event => {
+
+            if (!drawing) return;
+
+            const p = position(event);
+
+            ctx.lineTo(p.x, p.y);
+            ctx.stroke();
+
+          }
+        );
+
+        canvas.addEventListener(
+          "pointerup",
+          () => drawing = false
+        );
+
+        document.getElementById("clearCanvas")
+          .onclick = () => {
+
+            ctx.clearRect(
+              0,
+              0,
+              canvas.width,
+              canvas.height
+            );
+
+          };
+
+        activityButton.onclick = () => {
+
+          completeActivity(
+            "studio",
+            30,
+            10
+          );
+
+          closeModal();
+
+          showDialogue(
+            "Art Studio",
+            [
+              "Your artwork is adorable! 🎨✨",
+              "You earned some Perfect Day points."
+            ]
+          );
+
+        };
+
+      }
+    );
+
+  }
+
+
+  /* =========================
+     GARDEN
+     ========================= */
+
+  function openGarden() {
+
+    openModal(
+      "🌷",
+      "Magic Garden",
+      "Plant a flower and make the garden happier!",
+      "Plant Flower 🌷",
+      () => {
+
+        activityContent.innerHTML = `
+          <div style="
+            font-size:70px;
+            margin:25px;
+          ">
+            🌱
+          </div>
+
+          <p>
+            Click the button to grow your flower!
+          </p>
+        `;
+
+        activityButton.textContent =
+          "Grow Flower 🌸";
+
+        activityButton.onclick = () => {
+
+          activityContent.innerHTML = `
+            <div style="
+              font-size:90px;
+              margin:20px;
+              animation:flowerMove 1s infinite;
+            ">
+              🌷
+            </div>
+
+            <h2>Your flower grew! 💕</h2>
+          `;
+
+          activityButton.textContent =
+            "Collect Reward ✨";
+
+          activityButton.onclick = () => {
+
+            completeActivity(
+              "garden",
+              20,
+              6
+            );
+
+            closeModal();
+
+            showDialogue(
+              "Garden",
+              [
+                "Your flower is blooming! 🌷",
+                "The garden feels extra magical now."
+              ]
+            );
+
+          };
+
+        };
+
+      }
+    );
+
+  }
+
+
+  /* =========================
+     SHOP
+     ========================= */
+
+  function openShop() {
+
+    openModal(
+      "🛍️",
+      "Pastel Boutique",
+      "Spend your coins on cute items.",
+      "Shop ✨",
+      () => {
+
+        const items = [
+          {
+            name: "Pink Bow",
+            icon: "🎀",
+            price: 30
+          },
+          {
+            name: "Purple Crown",
+            icon: "👑",
+            price: 50
+          },
+          {
+            name: "Fairy Wings",
+            icon: "🪽",
+            price: 80
+          }
+        ];
+
+        activityContent.innerHTML = `
+          <div style="
+            display:grid;
+            grid-template-columns:repeat(3,1fr);
+            gap:10px;
+            margin-top:20px;
+          ">
+            ${items.map((item, index) => `
+              <button
+                class="shopItem"
+                data-index="${index}"
+                style="
+                  padding:15px 8px;
+                  border:3px solid #ead8ec;
+                  border-radius:18px;
+                  background:white;
+                  cursor:pointer;
+                ">
+                <div style="font-size:35px">
+                  ${item.icon}
+                </div>
+                <strong>${item.name}</strong>
+                <br>
+                🪙 ${item.price}
+              </button>
+            `).join("")}
+          </div>
+        `;
+
+        activityButton.textContent =
+          "Done Shopping 🛍️";
+
+        document.querySelectorAll(".shopItem")
+          .forEach((button, index) => {
+
+            button.addEventListener("click", () => {
+
+              const item = items[index];
+
+              if (coins >= item.price) {
+
+                coins -= item.price;
+
+                score += 5;
+
+                saveGame();
+                updateStats();
+
+                button.disabled = true;
+
+                button.innerHTML =
+                  `<div style="font-size:30px">✅</div>Purchased!`;
+
+                showFloatingText(
+                  `${item.name} purchased!`
+                );
+
+              } else {
+
+                alert(
+                  "You need more coins! 🪙"
+                );
+
+              }
+
+            });
+
+          });
+
+        activityButton.onclick = () => {
+
+          closeModal();
+
+        };
+
+      }
+    );
+
+  }
+
+
+  /* =========================
+     STUDY
+     ========================= */
+
+  function openStudy() {
+
+    openModal(
+      "📚",
+      "Study Time",
+      "Complete a tiny study session.",
+      "Start Study 📚",
+      () => {
+
+        let seconds = 10;
+
+        activityContent.innerHTML = `
+          <div style="
+            font-size:55px;
+            margin:20px;
+          ">
+            📖
+          </div>
+
+          <h2 id="studyTimer">
+            10
+          </h2>
+
+          <p>
+            Stay focused until the timer reaches zero!
+          </p>
+        `;
+
+        activityButton.disabled = true;
+
+        const timer =
+          setInterval(() => {
+
+            seconds--;
+
+            document.getElementById(
+              "studyTimer"
+            ).textContent = seconds;
+
+            if (seconds <= 0) {
+
+              clearInterval(timer);
+
+              activityButton.disabled = false;
+
+              activityButton.textContent =
+                "Finish Study ✨";
+
+              activityButton.onclick = () => {
+
+                completeActivity(
+                  "study",
+                  25,
+                  10
+                );
+
+                closeModal();
+
+                showDialogue(
+                  "Study Time",
+                  [
+                    "You did it! 📚✨",
+                    "A productive little study session."
+                  ]
+                );
+
+              };
+
+            }
+
+          }, 1000);
+
+      }
+    );
+
+  }
+
+
+  /* =========================
+     PET
+     ========================= */
+
+  function petInteraction() {
+
+    score += 10;
+    mood = Math.min(100, mood + 8);
+
+    saveGame();
+    updateStats();
+
+    showDialogue(
+      "Your Pet 🐰",
+      [
+        "Your pet is so happy to see you! 🐰💕",
+        "You got +10 Perfect Day points!"
+      ]
+    );
+
+  }
+
+
+  /* =========================
+     MODAL
+     ========================= */
+
+  function openModal(
+    icon,
+    title,
+    description,
+    buttonText,
+    action
+  ) {
+
+    modal.classList.remove("hidden");
+
+    modalIcon.textContent = icon;
+    modalTitle.textContent = title;
+    modalDescription.textContent = description;
+
+    activityContent.innerHTML = "";
+
+    activityButton.textContent = buttonText;
+
+    activityButton.disabled = false;
+
+    activityButton.onclick = action;
+
+  }
+
+
+  function closeModal() {
+
+    modal.classList.add("hidden");
+
+  }
+
+
+  closeModal.addEventListener(
+    "click",
+    closeModal
+  );
+
+
+  /* =========================
+     MINI GAME
+     ========================= */
+
+  function startMiniGame() {
+
+    miniGame.classList.remove("hidden");
+
+    miniScore = 0;
+
+    miniScoreDisplay.textContent =
+      miniScore;
+
+    miniGameArea.innerHTML = "";
+
+    let remaining = 20;
+
+    miniTimer = setInterval(() => {
+
+      createMiniItem();
+
+      remaining--;
+
+      if (remaining <= 0) {
+
+        clearInterval(miniTimer);
+
+        setTimeout(endMiniGame, 1000);
+
+      }
+
+    }, 700);
+
+  }
+
+
+  function createMiniItem() {
+
+    const item =
+      document.createElement("button");
+
+    item.className = "mini-item";
+
+    item.textContent =
+      ["🍓", "🌸", "⭐", "🦋"][
+        Math.floor(Math.random() * 4)
+      ];
+
+    item.style.left =
+      Math.random() * 90 + "%";
+
+    item.style.top =
+      Math.random() * 80 + "%";
+
+    item.addEventListener(
+      "click",
+      () => {
+
+        miniScore++;
+
+        miniScoreDisplay.textContent =
+          miniScore;
+
+        item.remove();
+
+      }
+    );
+
+    miniGameArea.appendChild(item);
+
+    setTimeout(() => {
+
+      if (item.parentElement) {
+        item.remove();
+      }
+
+    }, 1300);
+
+  }
+
+
+  function endMiniGame() {
+
+    const reward =
+      miniScore * 3;
+
+    coins += reward;
+    score += miniScore * 5;
+
+    saveGame();
+    updateStats();
+
+    alert(
+      `Game complete! 🎉\n\nYou caught ${miniScore} items!\nYou earned ${reward} coins!`
+    );
+
+    miniGame.classList.add("hidden");
+
+  }
+
+
+  closeMiniGame.addEventListener(
+    "click",
+    () => {
+
+      clearInterval(miniTimer);
+
+      miniGame.classList.add("hidden");
+
+    }
+  );
+
+
+  /* =========================
+     DIALOGUE
+     ========================= */
+
+  function showDialogue(
+    name,
+    lines
+  ) {
+
+    dialogueLines = lines;
+    dialogueIndex = 0;
+
+    dialogueName.textContent =
+      name;
+
+    dialogueText.textContent =
+      dialogueLines[0];
+
+    dialogue.classList.remove("hidden");
+
+  }
+
+
+  dialogueNext.addEventListener(
+    "click",
+    () => {
+
+      dialogueIndex++;
+
+      if (
+        dialogueIndex >=
+        dialogueLines.length
+      ) {
+
+        dialogue.classList.add("hidden");
+
+        return;
+
+      }
+
+      dialogueText.textContent =
+        dialogueLines[dialogueIndex];
+
+    }
+  );
+
+
+  /* =========================
+     COMPLETE ACTIVITY
+     ========================= */
+
+  function completeActivity(
+    id,
+    points,
+    moodGain
+  ) {
+
+    if (!completed.includes(id)) {
+
+      completed.push(id);
+
+      score += points;
+
+      mood =
+        Math.min(
+          100,
+          mood + moodGain
+        );
+
+      coins += 10;
+
+    } else {
+
+      score += Math.floor(points / 4);
+
+    }
+
+    saveGame();
+
+    updateStats();
+    updateProgress();
+
+    showFloatingText(
+      `+${points} ⭐`
+    );
+
+    if (completed.length >= 7) {
+
+      setTimeout(() => {
+
+        showDialogue(
+          "Perfect Day! 👑",
+          [
+            "You completed so many activities!",
+            "Your day is becoming absolutely perfect! ✨",
+            `Final score: ${score} ⭐`
+          ]
+        );
+
+      }, 500);
+
+    }
+
+  }
+
+
+  /* =========================
+     PROGRESS
+     ========================= */
+
+  function updateProgress() {
+
+    const total = 7;
+
+    const amount =
+      Math.min(
+        100,
+        (completed.length / total) * 100
+      );
+
+    progressFill.style.width =
+      amount + "%";
+
+    const stages = [
+      "Morning",
+      "Getting Ready",
+      "Late Morning",
+      "Afternoon",
+      "Golden Hour",
+      "Evening",
+      "Perfect Day",
+      "Perfect Day Complete! 👑"
+    ];
+
+    const stage =
+      Math.min(
+        stages.length - 1,
+        completed.length
+      );
+
+    progressText.textContent =
+      stages[stage];
+
+  }
+
+
+  /* =========================
+     STATS
+     ========================= */
+
+  function updateStats() {
+
+    coinsDisplay.textContent =
+      coins;
+
+    moodDisplay.textContent =
+      mood;
+
+    scoreDisplay.textContent =
+      score;
+
+  }
+
+
+  /* =========================
+     SAVE
+     ========================= */
+
+  function saveGame() {
+
+    localStorage.setItem(
+      "perfectDayCoins",
+      coins
+    );
+
+    localStorage.setItem(
+      "perfectDayMood",
+      mood
+    );
+
+    localStorage.setItem(
+      "perfectDayScore",
+      score
+    );
+
+    localStorage.setItem(
+      "perfectDayCompleted",
+      JSON.stringify(completed)
+    );
+
+  }
+
+
+  /* =========================
+     FLOATING TEXT
+     ========================= */
+
+  function showFloatingText(text) {
+
+    const popup =
+      document.createElement("div");
+
+    popup.textContent = text;
+
+    popup.style.position = "fixed";
+    popup.style.left = "50%";
+    popup.style.top = "45%";
+    popup.style.transform = "translate(-50%, -50%)";
+    popup.style.zIndex = "2000";
+    popup.style.padding = "12px 20px";
+    popup.style.borderRadius = "18px";
+    popup.style.background = "white";
+    popup.style.color = "#76566d";
+    popup.style.fontWeight = "900";
+    popup.style.boxShadow =
+      "0 10px 30px rgba(80,60,90,.2)";
+    popup.style.pointerEvents = "none";
+
+    document.body.appendChild(popup);
+
+    popup.animate(
+      [
+        {
+          opacity: 0,
+          transform:
+            "translate(-50%, -20%) scale(.8)"
+        },
+        {
+          opacity: 1,
+          transform:
+            "translate(-50%, -50%) scale(1)"
+        },
+        {
+          opacity: 0,
+          transform:
+            "translate(-50%, -90%) scale(1.05)"
+        }
+      ],
+      {
+        duration: 1200,
+        easing: "ease-out"
+      }
+    );
+
+    setTimeout(() => {
+      popup.remove();
+    }, 1200);
+
+  }
+
+
+  /* =========================
+     BLOCK MOVEMENT WHILE UI OPEN
+     ========================= */
+
+  function isBlocked() {
+
+    return (
+      !dialogue.classList.contains("hidden") ||
+      !modal.classList.contains("hidden") ||
+      !miniGame.classList.contains("hidden")
+    );
+
+  }
+
+
+  /* =========================
+     CLOSE EVERYTHING
+     ========================= */
+
+  function closeAll() {
+
+    dialogue.classList.add("hidden");
+    modal.classList.add("hidden");
+    miniGame.classList.add("hidden");
+
+    clearInterval(miniTimer);
+
+  }
+
+
+  /* =========================
+     SHOP / MINI GAME SECRET
+     ========================= */
+
+  /* Double-click the pet to start the mini-game */
+
+  let petClicks = 0;
+
+  document
+    .getElementById("pet")
+    .addEventListener("dblclick", () => {
+
+      if (gameStarted) {
+        startMiniGame();
       }
 
     });
 
-    board.appendChild(tile);
 
-  });
+  /* =========================
+     RESET SAVE
+     ========================= */
 
-}
+  window.resetPerfectDay = function() {
 
-
-/* =========================================================
-   ✨ MINI GAME 3 — STAR CATCHER
-   ========================================================= */
-
-let starsRunning = false;
-let starsCaught = 0;
-let starTimer = null;
-
-document.getElementById("startStars")?.addEventListener("click", () => {
-
-  if (starsRunning) return;
-
-  starsRunning = true;
-  starsCaught = 0;
-
-  document.getElementById("starScore").textContent = "0";
-
-  const board = document.getElementById("starBoard");
-
-  board.innerHTML = "";
-
-  let time = 20;
-
-  starTimer = setInterval(() => {
-
-    time--;
-
-    spawnStar();
-
-    if (time <= 0) {
-
-      clearInterval(starTimer);
-      starsRunning = false;
-
-      const reward = Math.min(60, starsCaught * 5);
-
-      addReward(
-        reward,
-        Math.min(20, starsCaught),
-        starsCaught * 3
-      );
-
-      toast(`✨ You caught ${starsCaught} stars! +${reward} 🪙`);
-
-      if (starsCaught >= 10) {
-        confetti();
-      }
-
-      checkAchievements();
-
-    }
-
-  }, 800);
-
-});
-
-function spawnStar() {
-
-  const board = document.getElementById("starBoard");
-
-  const star = document.createElement("button");
-
-  star.className = "falling-item";
-  star.textContent = "⭐";
-
-  star.style.left =
-    `${Math.random() * 88 + 4}%`;
-
-  star.style.top =
-    `${Math.random() * 78 + 5}%`;
-
-  star.addEventListener("click", () => {
-
-    starsCaught++;
-
-    document.getElementById("starScore").textContent =
-      starsCaught;
-
-    star.remove();
-
-  });
-
-  board.appendChild(star);
-
-  setTimeout(() => {
-
-    if (star.isConnected) {
-      star.remove();
-    }
-
-  }, 1000);
-
-}
-
-
-/* =========================================================
-   🏆 ACHIEVEMENTS
-   ========================================================= */
-
-const achievements = [
-
-  {
-    id: "first",
-    icon: "🌷",
-    title: "First Little Step",
-    description: "Complete your first activity.",
-    check: () => game.score >= 1
-  },
-
-  {
-    id: "coins",
-    icon: "🪙",
-    title: "Coin Collector",
-    description: "Have 250 coins.",
-    check: () => game.coins >= 250
-  },
-
-  {
-    id: "happy",
-    icon: "💗",
-    title: "Happy Heart",
-    description: "Reach 100 mood.",
-    check: () => game.mood >= 100
-  },
-
-  {
-    id: "artist",
-    icon: "🎨",
-    title: "Little Artist",
-    description: "Create artwork.",
-    check: () => game.memories.some(m => m.icon === "🎨")
-  },
-
-  {
-    id: "chef",
-    icon: "🧁",
-    title: "Tiny Chef",
-    description: "Complete a recipe.",
-    check: () => game.memories.some(m => m.icon === "🧁")
-  },
-
-  {
-    id: "traveler",
-    icon: "🏖️",
-    title: "Dreamy Traveler",
-    description: "Visit a destination.",
-    check: () => game.memories.some(m => m.icon === "🏖️")
-  },
-
-  {
-    id: "gardener",
-    icon: "🌱",
-    title: "Little Gardener",
-    description: "Grow five flowers.",
-    check: () => game.garden.filter(Boolean).length >= 5
-  },
-
-  {
-    id: "journal",
-    icon: "💌",
-    title: "Dear Diary",
-    description: "Write a journal entry.",
-    check: () => game.journals.length >= 1
-  },
-
-  {
-    id: "shopper",
-    icon: "🛍️",
-    title: "Pastel Shopper",
-    description: "Own three shop items.",
-    check: () => game.owned.length >= 3
-  },
-
-  {
-    id: "perfect",
-    icon: "👑",
-    title: "Perfect Day",
-    description: "Reach 500 Perfect Day points.",
-    check: () => game.score >= 500
-  }
-
-];
-
-function renderAchievements() {
-
-  const grid = document.getElementById("achievementGrid");
-
-  if (!grid) return;
-
-  grid.innerHTML = "";
-
-  achievements.forEach(achievement => {
-
-    const unlocked = achievement.check();
-
-    const card = document.createElement("div");
-
-    card.className =
-      `achievement ${unlocked ? "unlocked" : ""}`;
-
-    card.innerHTML = `
-
-      <div class="achievement-icon">
-        ${achievement.icon}
-      </div>
-
-      <h2>${achievement.title}</h2>
-
-      <p>${achievement.description}</p>
-
-      <small>
-        ${unlocked ? "✨ UNLOCKED" : "🔒 LOCKED"}
-      </small>
-
-    `;
-
-    grid.appendChild(card);
-
-  });
-
-}
-
-function checkAchievements() {
-
-  let newAchievement = false;
-
-  achievements.forEach(achievement => {
-
-    if (
-      achievement.check() &&
-      !game.achievements.includes(achievement.id)
-    ) {
-
-      game.achievements.push(achievement.id);
-
-      newAchievement = true;
-
-      toast(`🏆 Achievement: ${achievement.title}`);
-
-    }
-
-  });
-
-  if (newAchievement) {
-
-    game.coins += 20;
-    game.score += 15;
-
-    saveGame();
-
-  }
-
-}
-
-
-/* =========================================================
-   🎁 DAILY BONUS
-   ========================================================= */
-
-document.getElementById("dailyBonus")?.addEventListener("click", () => {
-
-  if (game.dailyBonus) {
-
-    toast("You already collected today's bonus 🎁");
-
-    return;
-
-  }
-
-  game.dailyBonus = true;
-
-  addReward(30, 10, 20);
-
-  toast("🎁 Daily bonus collected! +30 🪙");
-
-  confetti();
-
-});
-
-
-/* =========================================================
-   🌙 DARK MODE
-   ========================================================= */
-
-document.getElementById("themeButton")?.addEventListener("click", () => {
-
-  document.body.classList.toggle("dark");
-
-  const dark = document.body.classList.contains("dark");
-
-  document.getElementById("themeButton").textContent =
-    dark ? "☀️" : "🌙";
-
-  localStorage.setItem(
-    "perfectDayDarkMode",
-    dark
-  );
-
-});
-
-if (localStorage.getItem("perfectDayDarkMode") === "true") {
-
-  document.body.classList.add("dark");
-
-  document.getElementById("themeButton").textContent = "☀️";
-
-}
-
-
-/* =========================================================
-   💾 RESET
-   ========================================================= */
-
-document.getElementById("resetGame")?.addEventListener("click", () => {
-
-  const confirmed = confirm(
-    "Are you sure you want to reset your Perfect Day?"
-  );
-
-  if (!confirmed) return;
-
-  game = structuredClone(defaultGame);
-
-  saveGame();
-
-  updateCharacter();
-
-  toast("Everything has been reset 🌷");
-
-});
-
-
-/* =========================================================
-   📦 EXPORT SAVE
-   ========================================================= */
-
-document.getElementById("exportSave")?.addEventListener("click", () => {
-
-  const data = JSON.stringify(game, null, 2);
-
-  const blob = new Blob(
-    [data],
-    { type: "application/json" }
-  );
-
-  const url = URL.createObjectURL(blob);
-
-  const link = document.createElement("a");
-
-  link.href = url;
-  link.download = "my-perfect-day-save.json";
-
-  link.click();
-
-  URL.revokeObjectURL(url);
-
-  toast("💾 Save exported!");
-
-});
-
-
-/* =========================================================
-   🎉 CONFETTI
-   ========================================================= */
-
-function confetti() {
-
-  const icons = [
-    "🌸",
-    "✨",
-    "💗",
-    "🎀",
-    "⭐",
-    "🌷",
-    "💜"
-  ];
-
-  for (let i = 0; i < 25; i++) {
-
-    const piece = document.createElement("div");
-
-    piece.className = "confetti";
-
-    piece.textContent =
-      icons[Math.floor(Math.random() * icons.length)];
-
-    piece.style.left =
-      `${Math.random() * 100}%`;
-
-    piece.style.animationDelay =
-      `${Math.random() * .8}s`;
-
-    document.body.appendChild(piece);
-
-    setTimeout(() => {
-      piece.remove();
-    }, 3000);
-
-  }
-
-}
-
-
-/* =========================================================
-   📅 DATE
-   ========================================================= */
-
-const dateElement = document.getElementById("today");
-
-if (dateElement) {
-
-  dateElement.textContent =
-    new Date().toLocaleDateString(
-      undefined,
-      {
-        weekday: "long",
-        month: "short",
-        day: "numeric"
-      }
+    localStorage.removeItem(
+      "perfectDayCoins"
     );
 
-}
+    localStorage.removeItem(
+      "perfectDayMood"
+    );
 
+    localStorage.removeItem(
+      "perfectDayScore"
+    );
 
-/* =========================================================
-   🌷 INITIALIZE
-   ========================================================= */
+    localStorage.removeItem(
+      "perfectDayCompleted"
+    );
 
-function initialize() {
+    location.reload();
 
-  updateUI();
+  };
 
-  updateCharacter();
-
-  if (hairColor)
-    hairColor.value = game.look.hair;
-
-  if (hairStyle)
-    hairStyle.value = game.look.hairstyle;
-
-  if (outfit)
-    outfit.value = game.look.outfit;
-
-  if (accessorySelect)
-    accessorySelect.value = game.look.accessory;
-
-  if (skinTone)
-    skinTone.value = game.look.skin;
-
-  updateTimer();
-
-  checkAchievements();
-
-}
-
-initialize();
+});
 ```
